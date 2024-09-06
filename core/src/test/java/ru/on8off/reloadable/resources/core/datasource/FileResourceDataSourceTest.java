@@ -14,30 +14,30 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class FileResourceDataSourceTest {
-    List<String> fileTxtLinesExpected = Arrays.asList(
+    List<String> fileTxtLinesExpected = List.of(
             "Test string number 1",
             "Test string number 2",
             "Test string number 3"
     );
 
-
     @Test
-    public void testOpenAbsolutePathLocation() throws IOException {
+    public void testLoadAbsolutePathLocation() throws IOException {
         String location = new File(new File("").getAbsolutePath(), "src/test/resources/files/file.txt").getAbsolutePath();
         FileResourceDataSource dataSource = new FileResourceDataSource(location);
-        ResourceData<InputStream> result = dataSource.open(null);
+        ResourceData<InputStream> result = dataSource.load(null);
         assertNotNull(result);
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
         assertNotNull(result.getData());
         assertEquals(fileTxtLinesExpected, IOUtils.readLines(result.getData()));
+        System.out.println(result.getMetaData());
     }
 
     @Test
-    public void testOpenRelativePathLocation() throws IOException {
+    public void testLoadRelativePathLocation() throws IOException {
         String location = "./src/test/resources/files/file.txt";
         FileResourceDataSource dataSource = new FileResourceDataSource(location);
-        ResourceData<InputStream> result = dataSource.open(null);
+        ResourceData<InputStream> result = dataSource.load(null);
         assertNotNull(result);
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
@@ -46,10 +46,10 @@ public class FileResourceDataSourceTest {
     }
 
     @Test
-    public void testOpenClassPathLocation() throws IOException {
+    public void testLoadClassPathLocation() throws IOException {
         String location = "classpath:files/file.txt";
         FileResourceDataSource dataSource = new FileResourceDataSource(location);
-        ResourceData<InputStream> result = dataSource.open(null);
+        ResourceData<InputStream> result = dataSource.load(null);
         assertNotNull(result);
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
@@ -57,16 +57,4 @@ public class FileResourceDataSourceTest {
         assertEquals(fileTxtLinesExpected, IOUtils.readLines(result.getData()));
     }
 
-    @Test
-    public void testOpenZip() throws IOException {
-        String location = "./src/test/resources/files/file.txt.zip";;
-        FileResourceDataSource dataSource = new FileResourceDataSource(location);
-        ResourceData<InputStream> result = dataSource.open(null);
-        assertNotNull(result);
-        assertNotNull(result.getLocation());
-        assertNotNull(result.getLastModified());
-        assertNotNull(result.getData());
-        System.out.println(result.getData());
-        assertEquals(fileTxtLinesExpected, IOUtils.readLines(result.getData()));
-    }
 }

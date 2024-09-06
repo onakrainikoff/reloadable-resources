@@ -27,7 +27,7 @@ public class StringsResourceReader implements ResourceReader<List<String>> {
 
     @Override
     public ReloadableResource<List<String>> read(LocalDateTime lastModified) throws IOException {
-        ResourceData<InputStream> resourceData =  resourceDataSource.open(lastModified);
+        ResourceData<InputStream> resourceData =  resourceDataSource.load(lastModified);
         ReloadableResource<List<String>> reloadableResource = null;
         if (resourceData != null) {
             reloadableResource = new ReloadableResource<>();
