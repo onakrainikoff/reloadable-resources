@@ -4,34 +4,30 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
 import ru.on8off.reloadable.resources.core.ReloadableResource;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
+import java.util.List;
 
-public class StringMapper implements Mapper<InputStream, String> {
+public class StringListReloadableResourceMapper implements ReloadableResourceMapper<InputStream, List<String>> {
     private final Charset charset;
 
-    public StringMapper() {
+    public StringListReloadableResourceMapper() {
         this(Charset.defaultCharset());
     }
 
-    public StringMapper(Charset charset) {
+    public StringListReloadableResourceMapper(Charset charset) {
         this.charset = Validate.notNull(charset, "Param 'charset' must not be null");
     }
 
     @Override
-    public ReloadableResource<String> apply(ReloadableResource<InputStream> reloadableResourceFrom) {
-        ReloadableResource<String> reloadableResourceFromTo = null;
+    public ReloadableResource<List<String>> apply(ReloadableResource<InputStream> reloadableResourceFrom) {
+        ReloadableResource<List<String>> reloadableResourceFromTo = null;
         if (reloadableResourceFrom != null) {
             reloadableResourceFromTo = new ReloadableResource<>();
             reloadableResourceFromTo.setLastReloaded(LocalDateTime.now());
             reloadableResourceFromTo.setLastModified(reloadableResourceFrom.getLastModified());
-            try {
-                reloadableResourceFromTo.setResource(IOUtils.toString(reloadableResourceFrom.getResource(), charset));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            reloadableResourceFromTo.setResource(IOUtils.readLines(reloadableResourceFrom.getResource(), charset));
         }
         return reloadableResourceFromTo;
     }
