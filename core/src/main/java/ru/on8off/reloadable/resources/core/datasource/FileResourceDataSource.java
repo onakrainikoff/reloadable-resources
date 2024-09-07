@@ -8,14 +8,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Optional;
 
 public class FileResourceDataSource implements ResourceDataSource<InputStream> {
     private final String location;
@@ -27,8 +26,10 @@ public class FileResourceDataSource implements ResourceDataSource<InputStream> {
         if (location.startsWith("classpath:")) {
             ClassLoader classLoader = getClass().getClassLoader();
             String resourceName = location.replace("classpath:", "");
-            String resourceFilePath = classLoader.getResource(resourceName).getFile();
-            Validate.validState(resourceFilePath != null, "File doesn't exist: location=%s", location);
+            URL resourceFileUrl = classLoader.getResource(resourceName);
+            Validate.validState(resourceFileUrl != null, "File doesn't exist in classpath: location=%s", location);
+            String resourceFilePath = resourceFileUrl.getFile();
+            Validate.validState(resourceFilePath != null, "File doesn't exist in classpath: location=%s", location);
             this.file = new File(resourceFilePath);
         } else {
             this.file = new File(location);
@@ -38,32 +39,26 @@ public class FileResourceDataSource implements ResourceDataSource<InputStream> {
     }
 
     @Override
-    public ResourceData<InputStream> load(LocalDateTime lastModified) throws IOException {
-        ResourceData<InputStream> resourceData = null;
+    public Optional<FileReloadableResource<InputStream>> load(LocalDateTime lastModified) throws IOException {
+        FileReloadableResource<InputStream> resourceData = null;
         if (!file.canRead()) {
             throw new IOException("Can't read from file: " + file.getAbsolutePath());
         }
-        LocalDateTime fileLastModified = localDateTime(file.lastModified());
+        BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+        LocalDateTime fileLastModified = localDateTime(fileAttributes.lastModifiedTime().toMillis());
         if (lastModified == null || fileLastModified.isAfter(lastModified)) {
-            resourceData = new ResourceData<>();
+            resourceData = new FileReloadableResource<>();
             resourceData.setLastModified(fileLastModified);
             resourceData.setLocation(location);
-            resourceData.setData(new FileInputStream(file));
-            resourceData.setMetaData(getMetaData());
+            resourceData.setResource(new FileInputStream(file));
+            resourceData.setFileName(file.getName());
+            resourceData.setFileExtension(FilenameUtils.getExtension(file.getName()));
+            resourceData.setFilePath(file.getAbsolutePath());
+            resourceData.setFileCreated(localDateTime(fileAttributes.creationTime().toMillis()));
+            resourceData.setFileSize(FileUtils.byteCountToDisplaySize(fileAttributes.size()));
+            resourceData.setFileSizeBytes(fileAttributes.size());
         }
-        return resourceData;
-    }
-
-    private Map<String, String> getMetaData() throws IOException {
-        Map<String, String> metaData = new LinkedHashMap<>();
-        BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        metaData.put("file.name", file.getName());
-        metaData.put("file.extension", FilenameUtils.getExtension(file.getName()));
-        metaData.put("file.modified", localDateTime(file.lastModified()).toString());
-        metaData.put("file.created", localDateTime(fileAttributes.creationTime().toMillis()).toString());
-        metaData.put("file.size", FileUtils.byteCountToDisplaySize(file.length()));
-        metaData.put("file.path", file.getAbsolutePath());
-        return metaData;
+        return Optional.ofNullable(resourceData);
     }
 
     private LocalDateTime localDateTime(long millis) {

@@ -1,4 +1,4 @@
-package ru.on8off.reloadable.resources.core.reloadable;
+package ru.on8off.reloadable.resources.core;
 
 import lombok.Data;
 
