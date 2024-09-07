@@ -6,6 +6,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public interface ResourceDataSource<T> {
+public interface ReloadableResourceDataSource<T> {
     Optional<? extends ReloadableResource<T>> load(LocalDateTime lastModified) throws IOException;
 }

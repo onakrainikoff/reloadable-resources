@@ -19,14 +19,14 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FileResourceDataSourceTest {
+class FileReloadableResourceDataSourceTest {
     static final String TEST_FILE_TXT_PATH = "files/file.txt";
     static File TEST_FILE_TXT;
     static List<String> TEXT;
 
     @BeforeAll
     public static void init() throws IOException {
-        TEST_FILE_TXT = new File(FileResourceDataSourceTest.class.getClassLoader().getResource(TEST_FILE_TXT_PATH).getFile());
+        TEST_FILE_TXT = new File(FileReloadableResourceDataSourceTest.class.getClassLoader().getResource(TEST_FILE_TXT_PATH).getFile());
         TEXT = FileUtils.readLines(TEST_FILE_TXT, Charset.defaultCharset());
     }
 
@@ -40,7 +40,7 @@ class FileResourceDataSourceTest {
     @ParameterizedTest
     @MethodSource("locationsSource")
     public void testLocations(String location) throws IOException {
-        FileResourceDataSource dataSource = new FileResourceDataSource(location);
+        FileReloadableResourceDataSource dataSource = new FileReloadableResourceDataSource(location);
         Optional<FileReloadableResource<InputStream>> resource = dataSource.load(null);
         assertTrue(resource.isPresent());
         FileReloadableResource<InputStream> result = resource.get();
@@ -59,7 +59,7 @@ class FileResourceDataSourceTest {
     @Test
     public void testLastModified() throws IOException, InterruptedException {
         File file = createTempFileTxt(TEXT);
-        FileResourceDataSource dataSource = new FileResourceDataSource(file.getAbsolutePath());
+        FileReloadableResourceDataSource dataSource = new FileReloadableResourceDataSource(file.getAbsolutePath());
         Optional<FileReloadableResource<InputStream>> resource = dataSource.load(null);
         assertTrue(resource.isPresent());
         FileReloadableResource<InputStream> result = resource.get();
@@ -103,17 +103,17 @@ class FileResourceDataSourceTest {
 
     @Test
     public void testExceptions() throws IOException {
-        Throwable exception = assertThrows(NullPointerException.class, () -> new FileResourceDataSource(null));
+        Throwable exception = assertThrows(NullPointerException.class, () -> new FileReloadableResourceDataSource(null));
         assertTrue(exception.getMessage().contains("Param 'location' must not be null"));
 
-        exception = assertThrows(IllegalStateException.class, () -> new FileResourceDataSource("test.txt"));
+        exception = assertThrows(IllegalStateException.class, () -> new FileReloadableResourceDataSource("test.txt"));
         assertTrue(exception.getMessage().contains("File doesn't exist:"));
 
-        exception = assertThrows(IllegalStateException.class, () -> new FileResourceDataSource("classpath:test.txt"));
+        exception = assertThrows(IllegalStateException.class, () -> new FileReloadableResourceDataSource("classpath:test.txt"));
         assertTrue(exception.getMessage().contains("File doesn't exist in classpath:"));
 
         String dir = new File("").getAbsolutePath();
-        exception = assertThrows(IllegalStateException.class, () -> new FileResourceDataSource(dir));
+        exception = assertThrows(IllegalStateException.class, () -> new FileReloadableResourceDataSource(dir));
         assertTrue(exception.getMessage().contains("Path isn't a file:"));
     }
 

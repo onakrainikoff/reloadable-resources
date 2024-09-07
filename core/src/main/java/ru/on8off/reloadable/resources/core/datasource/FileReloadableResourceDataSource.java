@@ -16,11 +16,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
-public class FileResourceDataSource implements ResourceDataSource<InputStream> {
+public class FileReloadableResourceDataSource implements ReloadableResourceDataSource<InputStream> {
     private final String location;
     private final File file;
 
-    public FileResourceDataSource(String location) {
+    public FileReloadableResourceDataSource(String location) {
         Validate.notNull(location, "Param 'location' must not be null");
         this.location = location;
         if (location.startsWith("classpath:")) {
