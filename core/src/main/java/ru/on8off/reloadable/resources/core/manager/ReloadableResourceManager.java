@@ -19,14 +19,6 @@ public class ReloadableResourceManager<T> {
     protected ReentrantLock reloadLock;
 
     // todo readiness
-    protected ReloadableResourceManager() {}
-
-    protected ReloadableResourceManager(long time, TimeUnit unit) {
-        this.executorService = Executors.newSingleThreadScheduledExecutor();
-        this.time = time;
-        this.unit = unit;
-    }
-
     public ReloadableResourceManager(ReloadableResourceSupplier<T> reloadableResourceSupplier, long time, TimeUnit unit) {
         this(reloadableResourceSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), false);
     }

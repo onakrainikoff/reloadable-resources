@@ -9,15 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ReloadableString extends ReloadableResourceManager<String> {
-    private String location;
-    private FileReloadableResourceDataSource resourceDataSource;
-
     public ReloadableString(String location, long time, TimeUnit unit) {
-        super();
-        this.location = location;
-        this.resourceDataSource = new FileReloadableResourceDataSource(location);
-        this.reloadableResourceSupplier = new StringReloadableResourceSupplier(resourceDataSource);
-        reload();
-        start();
+        super(new StringReloadableResourceSupplier(new FileReloadableResourceDataSource(location)), time, unit);
     }
 }
