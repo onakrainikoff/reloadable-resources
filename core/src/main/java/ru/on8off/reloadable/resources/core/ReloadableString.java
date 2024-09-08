@@ -8,8 +8,14 @@ import ru.on8off.reloadable.resources.core.supplier.StringReloadableResourceSupp
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class ReloadableString extends ReloadableResourceManager<String> {
+public class ReloadableString implements Reloadable<String> {
+    private final ReloadableResourceManager<String> reloadableResourceManager;
     public ReloadableString(String location, long time, TimeUnit unit) {
-        super(new StringReloadableResourceSupplier(new FileReloadableResourceDataSource(location)), time, unit);
+        this.reloadableResourceManager = new ReloadableResourceManager<>(new StringReloadableResourceSupplier(new FileReloadableResourceDataSource(location)), time, unit);
     }
+    @Override
+    public String get() {
+        return reloadableResourceManager.getResource();
+    }
+
 }
