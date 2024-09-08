@@ -1,4 +1,6 @@
-package ru.on8off.reloadable.resources.core;
+package ru.on8off.reloadable.resources.core.supplier;
+
+import ru.on8off.reloadable.resources.core.ReloadableResource;
 
 import java.io.IOException;
 import java.time.LocalDateTime;

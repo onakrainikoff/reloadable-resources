@@ -1,4 +1,7 @@
-package ru.on8off.reloadable.resources.core;
+package ru.on8off.reloadable.resources.core.manager;
+
+import ru.on8off.reloadable.resources.core.ReloadableResource;
+import ru.on8off.reloadable.resources.core.supplier.ReloadableResourceSupplier;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
@@ -7,15 +10,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ReloadableResourceManager<T> {
-    private ScheduledExecutorService executorService;
-    private ReloadableResourceSupplier<T> reloadableResourceSupplier;
-    private volatile ReloadableResource<T> reloadableResource;
-    private boolean started = false;
-    private long time;
-    private TimeUnit unit;
-    private ReentrantLock reloadLock;
+    protected ScheduledExecutorService executorService;
+    protected ReloadableResourceSupplier<T> reloadableResourceSupplier;
+    protected volatile ReloadableResource<T> reloadableResource;
+    protected boolean started = false;
+    protected long time;
+    protected TimeUnit unit;
+    protected ReentrantLock reloadLock;
 
     // todo readiness
+    protected ReloadableResourceManager() {}
+
+    protected ReloadableResourceManager(long time, TimeUnit unit) {
+        this.executorService = Executors.newSingleThreadScheduledExecutor();
+        this.time = time;
+        this.unit = unit;
+    }
 
     public ReloadableResourceManager(ReloadableResourceSupplier<T> reloadableResourceSupplier, long time, TimeUnit unit) {
         this(reloadableResourceSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), false);

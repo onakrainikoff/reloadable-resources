@@ -2,7 +2,6 @@ package ru.on8off.reloadable.resources.core.supplier;
 
 
 import ru.on8off.reloadable.resources.core.ReloadableResource;
-import ru.on8off.reloadable.resources.core.ReloadableResourceSupplier;
 import ru.on8off.reloadable.resources.core.datasource.ReloadableResourceDataSource;
 import ru.on8off.reloadable.resources.core.mapper.StringReloadableResourceMapper;
 
