@@ -27,6 +27,7 @@ public class StringListReloadableResourceMapper implements ReloadableResourceMap
             reloadableResourceFromTo = new ReloadableResource<>();
             reloadableResourceFromTo.setLastReloaded(LocalDateTime.now());
             reloadableResourceFromTo.setLastModified(reloadableResourceFrom.getLastModified());
+            // todo buffered reading
             reloadableResourceFromTo.setResource(IOUtils.readLines(reloadableResourceFrom.getResource(), charset));
         }
         return reloadableResourceFromTo;

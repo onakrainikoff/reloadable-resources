@@ -28,6 +28,7 @@ public class StringReloadableResourceMapper implements ReloadableResourceMapper<
             reloadableResourceFromTo.setLastReloaded(LocalDateTime.now());
             reloadableResourceFromTo.setLastModified(reloadableResourceFrom.getLastModified());
             try {
+                // todo buffered reading
                 reloadableResourceFromTo.setResource(IOUtils.toString(reloadableResourceFrom.getResource(), charset));
             } catch (IOException e) {
                 throw new RuntimeException(e);

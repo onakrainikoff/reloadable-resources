@@ -1,5 +1,6 @@
 package ru.on8off.reloadable.resources.core.datasource;
 
+import lombok.Getter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.Validate;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Optional;
 
+@Getter
 public class FileReloadableResourceDataSource implements ReloadableResourceDataSource<InputStream> {
     private final String location;
     private final File file;
