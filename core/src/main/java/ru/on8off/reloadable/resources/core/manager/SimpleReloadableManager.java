@@ -9,27 +9,31 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BaseReloadableManager<T> implements ReloadableManager<T> {
+public class SimpleReloadableManager<T> implements ReloadableManager<T> {
     protected ScheduledExecutorService executorService;
     protected ReloadableDataSupplier<T> reloadableDataSupplier;
     protected volatile ReloadableData<T> reloadableData;
     protected boolean started = false;
-    protected long time;
+    protected long period;
     protected TimeUnit unit;
+    protected long initialDelay;
     protected ReentrantLock reloadLock;
 
-    public BaseReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long time, TimeUnit unit) {
-        this(reloadableDataSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), false);
+    public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit) {
+        this(reloadableDataSupplier, period, unit, false);
     }
 
-    public BaseReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long time, TimeUnit unit, boolean lazy) {
-        this(reloadableDataSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), lazy);
+    public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, boolean lazy) {
+        this(reloadableDataSupplier, period, unit, 0, Executors.newSingleThreadScheduledExecutor(), lazy);
     }
 
-    public BaseReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long time, TimeUnit unit, ScheduledExecutorService executorService, boolean lazy) {
+    public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, long initialDelay, ScheduledExecutorService executorService, boolean lazy) {
         // todo validation
         this.reloadableDataSupplier = reloadableDataSupplier;
         this.executorService = executorService;
+        this.period = period;
+        this.unit = unit;
+        this.initialDelay = initialDelay;
         if (!lazy) {
             reload();
             start();
@@ -38,8 +42,8 @@ public class BaseReloadableManager<T> implements ReloadableManager<T> {
 
     @Override
     public synchronized void start() {
-        if (!started) {
-            this.executorService.scheduleAtFixedRate(this::reload, 0, time, unit);
+        if (!started && !executorService.isShutdown()) {
+            this.executorService.scheduleAtFixedRate(this::reload, initialDelay, period, unit);
             this.started = true;
         }
     }
@@ -76,7 +80,7 @@ public class BaseReloadableManager<T> implements ReloadableManager<T> {
 
     @Override
     public synchronized void stop() {
-        // todo shutdown
+        this.executorService.shutdown();
     }
 
 }
