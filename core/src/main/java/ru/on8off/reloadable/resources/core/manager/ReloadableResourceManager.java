@@ -1,7 +1,7 @@
 package ru.on8off.reloadable.resources.core.manager;
 
-import ru.on8off.reloadable.resources.core.ReloadableResource;
-import ru.on8off.reloadable.resources.core.supplier.ReloadableResourceSupplier;
+import ru.on8off.reloadable.resources.core.ReloadableResourceData;
+import ru.on8off.reloadable.resources.core.supplier.ReloadableResourceDataSupplier;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
@@ -11,24 +11,24 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ReloadableResourceManager<T> {
     protected ScheduledExecutorService executorService;
-    protected ReloadableResourceSupplier<T> reloadableResourceSupplier;
-    protected volatile ReloadableResource<T> reloadableResource;
+    protected ReloadableResourceDataSupplier<T> reloadableResourceDataSupplier;
+    protected volatile ReloadableResourceData<T> reloadableResourceData;
     protected boolean started = false;
     protected long time;
     protected TimeUnit unit;
     protected ReentrantLock reloadLock;
 
     // todo readiness
-    public ReloadableResourceManager(ReloadableResourceSupplier<T> reloadableResourceSupplier, long time, TimeUnit unit) {
-        this(reloadableResourceSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), false);
+    public ReloadableResourceManager(ReloadableResourceDataSupplier<T> reloadableResourceDataSupplier, long time, TimeUnit unit) {
+        this(reloadableResourceDataSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), false);
     }
-    public ReloadableResourceManager(ReloadableResourceSupplier<T> reloadableResourceSupplier, long time, TimeUnit unit, boolean lazy) {
-        this(reloadableResourceSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), lazy);
+    public ReloadableResourceManager(ReloadableResourceDataSupplier<T> reloadableResourceDataSupplier, long time, TimeUnit unit, boolean lazy) {
+        this(reloadableResourceDataSupplier, time, unit, Executors.newSingleThreadScheduledExecutor(), lazy);
     }
 
-    public ReloadableResourceManager(ReloadableResourceSupplier<T> reloadableResourceSupplier, long time, TimeUnit unit, ScheduledExecutorService executorService, boolean lazy) {
+    public ReloadableResourceManager(ReloadableResourceDataSupplier<T> reloadableResourceDataSupplier, long time, TimeUnit unit, ScheduledExecutorService executorService, boolean lazy) {
         // todo validation
-        this.reloadableResourceSupplier = reloadableResourceSupplier;
+        this.reloadableResourceDataSupplier = reloadableResourceDataSupplier;
         this.executorService = executorService;
         if (!lazy) {
             reload();
@@ -51,8 +51,8 @@ public class ReloadableResourceManager<T> {
         // todo logging
         try {
             reloadLock.lock();
-            LocalDateTime lastModified = reloadableResource != null ? reloadableResource.getLastReloaded() : null;
-            this.reloadableResource = reloadableResourceSupplier.get(lastModified).orElse(null);
+            LocalDateTime lastModified = reloadableResourceData != null ? reloadableResourceData.getLastReloaded() : null;
+            this.reloadableResourceData = reloadableResourceDataSupplier.get(lastModified).orElse(null);
         } catch (Exception e) {
 
         } finally {
@@ -61,12 +61,12 @@ public class ReloadableResourceManager<T> {
 
     }
 
-    public ReloadableResource<T> getReloadableResource() {
-        return reloadableResource;
+    public ReloadableResourceData<T> getReloadableResource() {
+        return reloadableResourceData;
     }
 
     public T getResource() {
-        return reloadableResource.getResource();
+        return reloadableResourceData.getResource();
     }
 
     public synchronized void stop(){

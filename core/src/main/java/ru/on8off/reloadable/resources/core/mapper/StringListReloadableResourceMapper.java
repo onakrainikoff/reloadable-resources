@@ -2,7 +2,7 @@ package ru.on8off.reloadable.resources.core.mapper;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
-import ru.on8off.reloadable.resources.core.ReloadableResource;
+import ru.on8off.reloadable.resources.core.ReloadableResourceData;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -21,15 +21,15 @@ public class StringListReloadableResourceMapper implements ReloadableResourceMap
     }
 
     @Override
-    public ReloadableResource<List<String>> apply(ReloadableResource<InputStream> reloadableResourceFrom) {
-        ReloadableResource<List<String>> reloadableResourceFromTo = null;
-        if (reloadableResourceFrom != null) {
-            reloadableResourceFromTo = new ReloadableResource<>();
-            reloadableResourceFromTo.setLastReloaded(LocalDateTime.now());
-            reloadableResourceFromTo.setLastModified(reloadableResourceFrom.getLastModified());
+    public ReloadableResourceData<List<String>> apply(ReloadableResourceData<InputStream> reloadableResourceDataFrom) {
+        ReloadableResourceData<List<String>> reloadableResourceDataFromTo = null;
+        if (reloadableResourceDataFrom != null) {
+            reloadableResourceDataFromTo = new ReloadableResourceData<>();
+            reloadableResourceDataFromTo.setLastReloaded(LocalDateTime.now());
+            reloadableResourceDataFromTo.setLastModified(reloadableResourceDataFrom.getLastModified());
             // todo buffered reading
-            reloadableResourceFromTo.setResource(IOUtils.readLines(reloadableResourceFrom.getResource(), charset));
+            reloadableResourceDataFromTo.setResource(IOUtils.readLines(reloadableResourceDataFrom.getResource(), charset));
         }
-        return reloadableResourceFromTo;
+        return reloadableResourceDataFromTo;
     }
 }

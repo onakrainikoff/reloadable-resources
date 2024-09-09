@@ -19,14 +19,14 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FileReloadableResourceDataSourceTest {
+class FileReloadableResourceDataDataSourceTestResource {
     static final String TEST_FILE_TXT_PATH = "files/file.txt";
     static File TEST_FILE_TXT;
     static List<String> TEXT;
 
     @BeforeAll
     public static void init() throws IOException {
-        TEST_FILE_TXT = new File(FileReloadableResourceDataSourceTest.class.getClassLoader().getResource(TEST_FILE_TXT_PATH).getFile());
+        TEST_FILE_TXT = new File(FileReloadableResourceDataDataSourceTestResource.class.getClassLoader().getResource(TEST_FILE_TXT_PATH).getFile());
         TEXT = FileUtils.readLines(TEST_FILE_TXT, Charset.defaultCharset());
     }
 
@@ -41,9 +41,9 @@ class FileReloadableResourceDataSourceTest {
     @MethodSource("locationsSource")
     public void testLocations(String location) throws IOException {
         FileReloadableResourceDataSource dataSource = new FileReloadableResourceDataSource(location);
-        Optional<FileReloadableResource<InputStream>> resource = dataSource.load(null);
+        Optional<FileReloadableResourceData<InputStream>> resource = dataSource.load(null);
         assertTrue(resource.isPresent());
-        FileReloadableResource<InputStream> result = resource.get();
+        FileReloadableResourceData<InputStream> result = resource.get();
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
         assertNotNull(result.getResource());
@@ -60,9 +60,9 @@ class FileReloadableResourceDataSourceTest {
     public void testLastModified() throws IOException, InterruptedException {
         File file = createTempFileTxt(TEXT);
         FileReloadableResourceDataSource dataSource = new FileReloadableResourceDataSource(file.getAbsolutePath());
-        Optional<FileReloadableResource<InputStream>> resource = dataSource.load(null);
+        Optional<FileReloadableResourceData<InputStream>> resource = dataSource.load(null);
         assertTrue(resource.isPresent());
-        FileReloadableResource<InputStream> result = resource.get();
+        FileReloadableResourceData<InputStream> result = resource.get();
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
         assertNotNull(result.getResource());

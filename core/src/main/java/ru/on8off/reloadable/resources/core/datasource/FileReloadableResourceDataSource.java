@@ -41,15 +41,15 @@ public class FileReloadableResourceDataSource implements ReloadableResourceDataS
     }
 
     @Override
-    public Optional<FileReloadableResource<InputStream>> load(LocalDateTime lastModified) throws IOException {
-        FileReloadableResource<InputStream> resourceData = null;
+    public Optional<FileReloadableResourceData<InputStream>> load(LocalDateTime lastModified) throws IOException {
+        FileReloadableResourceData<InputStream> resourceData = null;
         if (!file.canRead()) {
             throw new IOException("Can't read from file: " + file.getAbsolutePath());
         }
         BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
         LocalDateTime fileLastModified = localDateTime(fileAttributes.lastModifiedTime().toMillis());
         if (lastModified == null || fileLastModified.isAfter(lastModified)) {
-            resourceData = new FileReloadableResource<>();
+            resourceData = new FileReloadableResourceData<>();
             resourceData.setLastModified(fileLastModified);
             resourceData.setLocation(location);
             resourceData.setResource(new FileInputStream(file));

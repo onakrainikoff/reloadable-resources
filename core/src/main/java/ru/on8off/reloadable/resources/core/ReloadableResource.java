@@ -1,13 +1,10 @@
 package ru.on8off.reloadable.resources.core;
 
-import lombok.Data;
+import java.util.function.Supplier;
 
-import java.time.LocalDateTime;
+public interface ReloadableResource<T>{
+    T get();
+    T getReloadableResourceData();
+    T getReloadableResourceManager();
 
-@Data
-public class ReloadableResource<T>{
-    private LocalDateTime lastReloaded;
-    private LocalDateTime lastModified;
-    private String location;
-    private T resource;
 }
