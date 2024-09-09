@@ -1,32 +1,36 @@
 package ru.on8off.reloadable.resources.core.manager;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import ru.on8off.reloadable.resources.core.data.ReloadableData;
 import ru.on8off.reloadable.resources.core.data.supplier.ReloadableDataSupplier;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SimpleReloadableManager<T> implements ReloadableManager<T> {
-    protected ScheduledExecutorService executorService;
-    protected ReloadableDataSupplier<T> reloadableDataSupplier;
-    protected volatile ReloadableData<T> reloadableData;
-    protected boolean started = false;
-    protected long period;
-    protected TimeUnit unit;
-    protected long initialDelay;
-    protected ReentrantLock reloadLock;
+    private ScheduledExecutorService executorService;
+    private ReloadableDataSupplier<T> reloadableDataSupplier;
+    private volatile ReloadableData<T> reloadableData;
+    private boolean started = false;
+    private long period;
+    private TimeUnit unit;
+    private long initialDelay;
+    private ReentrantLock reloadLock;
 
     public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit) {
         this(reloadableDataSupplier, period, unit, false);
     }
 
     public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, boolean lazy) {
-        this(reloadableDataSupplier, period, unit, 0, Executors.newSingleThreadScheduledExecutor(), lazy);
+        this(reloadableDataSupplier, period, unit, 0, defaultExecutorService(), lazy);
     }
-
+    public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, long initialDelay, boolean lazy) {
+        this(reloadableDataSupplier, period, unit, initialDelay, defaultExecutorService(), lazy);
+    }
     public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, long initialDelay, ScheduledExecutorService executorService, boolean lazy) {
         // todo validation
         this.reloadableDataSupplier = reloadableDataSupplier;
@@ -83,6 +87,15 @@ public class SimpleReloadableManager<T> implements ReloadableManager<T> {
         if (!executorService.isShutdown()) {
             this.executorService.shutdown();
         }
+    }
+
+    private static ScheduledExecutorService defaultExecutorService() {
+        BasicThreadFactory factory = new BasicThreadFactory.Builder()
+                .namingPattern("SimpleReloadableManager-%d")
+                .daemon(true)
+                .priority(Thread.MAX_PRIORITY)
+                .build();
+        return Executors.newSingleThreadScheduledExecutor(factory);
     }
 
 }
