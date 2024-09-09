@@ -80,7 +80,9 @@ public class SimpleReloadableManager<T> implements ReloadableManager<T> {
 
     @Override
     public synchronized void stop() {
-        this.executorService.shutdown();
+        if (!executorService.isShutdown()) {
+            this.executorService.shutdown();
+        }
     }
 
 }
