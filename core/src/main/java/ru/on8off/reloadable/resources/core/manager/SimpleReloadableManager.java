@@ -1,5 +1,6 @@
 package ru.on8off.reloadable.resources.core.manager;
 
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import ru.on8off.reloadable.resources.core.data.ReloadableData;
 import ru.on8off.reloadable.resources.core.data.supplier.ReloadableDataSupplier;
@@ -12,14 +13,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SimpleReloadableManager<T> implements ReloadableManager<T> {
-    private ScheduledExecutorService executorService;
-    private ReloadableDataSupplier<T> reloadableDataSupplier;
+    private final ScheduledExecutorService executorService;
+    private final ReloadableDataSupplier<T> reloadableDataSupplier;
     private volatile ReloadableData<T> reloadableData;
     private boolean started = false;
-    private long period;
-    private TimeUnit unit;
-    private long initialDelay;
-    private ReentrantLock reloadLock;
+    private final long period;
+    private final TimeUnit unit;
+    private final long initialDelay;
+    private final ReentrantLock reloadLock = new ReentrantLock();
 
     public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit) {
         this(reloadableDataSupplier, period, unit, false);
@@ -32,11 +33,12 @@ public class SimpleReloadableManager<T> implements ReloadableManager<T> {
         this(reloadableDataSupplier, period, unit, initialDelay, defaultExecutorService(), lazy);
     }
     public SimpleReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, long initialDelay, ScheduledExecutorService executorService, boolean lazy) {
-        // todo validation
-        this.reloadableDataSupplier = reloadableDataSupplier;
-        this.executorService = executorService;
+        this.reloadableDataSupplier = Validate.notNull(reloadableDataSupplier, "Param 'reloadableDataSupplier' must not be null");
+        this.executorService = Validate.notNull(executorService, "Param 'executorService' must not be null");
+        Validate.isTrue(period > 0, "Param 'period' must be > 0");
         this.period = period;
-        this.unit = unit;
+        this.unit = Validate.notNull(unit, "Param 'unit' must not be null");
+        Validate.isTrue(initialDelay >= 0, "Param 'initialDelay' must be >= 0");
         this.initialDelay = initialDelay;
         if (!lazy) {
             reload();
