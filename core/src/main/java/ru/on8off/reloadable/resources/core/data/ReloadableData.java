@@ -1,13 +1,13 @@
-package ru.on8off.reloadable.resources.core;
+package ru.on8off.reloadable.resources.core.data;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class ReloadableResourceData<T>{
+public class ReloadableData<T>{
     private LocalDateTime lastReloaded;
     private LocalDateTime lastModified;
     private String location;
-    private T resource;
+    private T data;
 }

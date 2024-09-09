@@ -1,10 +1,9 @@
 package ru.on8off.reloadable.resources.core;
 
-import java.util.function.Supplier;
+import ru.on8off.reloadable.resources.core.manager.ReloadableManager;
 
-public interface ReloadableResource<T>{
+public interface ReloadableResource<T> {
     T get();
-    T getReloadableResourceData();
-    T getReloadableResourceManager();
 
+    ReloadableManager<T> getReloadableResourceManager();
 }

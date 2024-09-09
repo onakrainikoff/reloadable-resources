@@ -1,4 +1,4 @@
-package ru.on8off.reloadable.resources.core.datasource;
+package ru.on8off.reloadable.resources.core.data.source;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -19,14 +19,14 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FileReloadableResourceDataDataSourceTestResource {
+class FileDataSourceTest {
     static final String TEST_FILE_TXT_PATH = "files/file.txt";
     static File TEST_FILE_TXT;
     static List<String> TEXT;
 
     @BeforeAll
     public static void init() throws IOException {
-        TEST_FILE_TXT = new File(FileReloadableResourceDataDataSourceTestResource.class.getClassLoader().getResource(TEST_FILE_TXT_PATH).getFile());
+        TEST_FILE_TXT = new File(FileDataSourceTest.class.getClassLoader().getResource(TEST_FILE_TXT_PATH).getFile());
         TEXT = FileUtils.readLines(TEST_FILE_TXT, Charset.defaultCharset());
     }
 
@@ -40,39 +40,39 @@ class FileReloadableResourceDataDataSourceTestResource {
     @ParameterizedTest
     @MethodSource("locationsSource")
     public void testLocations(String location) throws IOException {
-        FileReloadableResourceDataSource dataSource = new FileReloadableResourceDataSource(location);
-        Optional<FileReloadableResourceData<InputStream>> resource = dataSource.load(null);
+        FileDataSource dataSource = new FileDataSource(location);
+        Optional<FileReloadableData<InputStream>> resource = dataSource.load(null);
         assertTrue(resource.isPresent());
-        FileReloadableResourceData<InputStream> result = resource.get();
+        FileReloadableData<InputStream> result = resource.get();
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
-        assertNotNull(result.getResource());
+        assertNotNull(result.getData());
         assertNotNull(result.getFileName());
         assertNotNull(result.getFileExtension());
         assertNotNull(result.getFilePath());
         assertNotNull(result.getFileCreated());
         assertNotNull(result.getFileSize());
         assertNotNull(result.getFileSizeBytes());
-        assertEquals(TEXT, IOUtils.readLines(result.getResource(), Charset.defaultCharset()));
+        assertEquals(TEXT, IOUtils.readLines(result.getData(), Charset.defaultCharset()));
     }
 
     @Test
     public void testLastModified() throws IOException, InterruptedException {
         File file = createTempFileTxt(TEXT);
-        FileReloadableResourceDataSource dataSource = new FileReloadableResourceDataSource(file.getAbsolutePath());
-        Optional<FileReloadableResourceData<InputStream>> resource = dataSource.load(null);
+        FileDataSource dataSource = new FileDataSource(file.getAbsolutePath());
+        Optional<FileReloadableData<InputStream>> resource = dataSource.load(null);
         assertTrue(resource.isPresent());
-        FileReloadableResourceData<InputStream> result = resource.get();
+        FileReloadableData<InputStream> result = resource.get();
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
-        assertNotNull(result.getResource());
+        assertNotNull(result.getData());
         assertNotNull(result.getFileName());
         assertNotNull(result.getFileExtension());
         assertNotNull(result.getFilePath());
         assertNotNull(result.getFileCreated());
         assertNotNull(result.getFileSize());
         assertNotNull(result.getFileSizeBytes());
-        assertEquals(TEXT, IOUtils.readLines(result.getResource(), Charset.defaultCharset()));
+        assertEquals(TEXT, IOUtils.readLines(result.getData(), Charset.defaultCharset()));
 
         Thread.sleep(100);
         LocalDateTime last = result.getLastModified();
@@ -86,14 +86,14 @@ class FileReloadableResourceDataDataSourceTestResource {
         result = resource.get();
         assertNotNull(result.getLocation());
         assertNotNull(result.getLastModified());
-        assertNotNull(result.getResource());
+        assertNotNull(result.getData());
         assertNotNull(result.getFileName());
         assertNotNull(result.getFileExtension());
         assertNotNull(result.getFilePath());
         assertNotNull(result.getFileCreated());
         assertNotNull(result.getFileSize());
         assertNotNull(result.getFileSizeBytes());
-        assertEquals(newText, IOUtils.readLines(result.getResource(), Charset.defaultCharset()));
+        assertEquals(newText, IOUtils.readLines(result.getData(), Charset.defaultCharset()));
 
         Thread.sleep(100);
         last = result.getLastModified();
@@ -103,17 +103,17 @@ class FileReloadableResourceDataDataSourceTestResource {
 
     @Test
     public void testExceptions() throws IOException {
-        Throwable exception = assertThrows(NullPointerException.class, () -> new FileReloadableResourceDataSource(null));
+        Throwable exception = assertThrows(NullPointerException.class, () -> new FileDataSource(null));
         assertTrue(exception.getMessage().contains("Param 'location' must not be null"));
 
-        exception = assertThrows(IllegalStateException.class, () -> new FileReloadableResourceDataSource("test.txt"));
+        exception = assertThrows(IllegalStateException.class, () -> new FileDataSource("test.txt"));
         assertTrue(exception.getMessage().contains("File doesn't exist:"));
 
-        exception = assertThrows(IllegalStateException.class, () -> new FileReloadableResourceDataSource("classpath:test.txt"));
+        exception = assertThrows(IllegalStateException.class, () -> new FileDataSource("classpath:test.txt"));
         assertTrue(exception.getMessage().contains("File doesn't exist in classpath:"));
 
         String dir = new File("").getAbsolutePath();
-        exception = assertThrows(IllegalStateException.class, () -> new FileReloadableResourceDataSource(dir));
+        exception = assertThrows(IllegalStateException.class, () -> new FileDataSource(dir));
         assertTrue(exception.getMessage().contains("Path isn't a file:"));
     }
 

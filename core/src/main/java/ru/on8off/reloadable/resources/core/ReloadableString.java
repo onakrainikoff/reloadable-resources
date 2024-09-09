@@ -1,19 +1,26 @@
 package ru.on8off.reloadable.resources.core;
 
-import ru.on8off.reloadable.resources.core.datasource.FileReloadableResourceDataSource;
-import ru.on8off.reloadable.resources.core.manager.ReloadableResourceManager;
-import ru.on8off.reloadable.resources.core.supplier.StringReloadableResourceDataSupplier;
+import ru.on8off.reloadable.resources.core.data.source.FileDataSource;
+import ru.on8off.reloadable.resources.core.data.supplier.StringDataSupplier;
+import ru.on8off.reloadable.resources.core.manager.BaseReloadableManager;
+import ru.on8off.reloadable.resources.core.manager.ReloadableManager;
 
 import java.util.concurrent.TimeUnit;
 
 public class ReloadableString implements ReloadableResource<String> {
-    private final ReloadableResourceManager<String> reloadableResourceManager;
+    private final ReloadableManager<String> reloadableManager;
+
     public ReloadableString(String location, long time, TimeUnit unit) {
-        this.reloadableResourceManager = new ReloadableResourceManager<>(new StringReloadableResourceDataSupplier(new FileReloadableResourceDataSource(location)), time, unit);
-    }
-    @Override
-    public String get() {
-        return reloadableResourceManager.getResource();
+        this.reloadableManager = new BaseReloadableManager<>(new StringDataSupplier(new FileDataSource(location)), time, unit);
     }
 
+    @Override
+    public String get() {
+        return reloadableManager.getData();
+    }
+
+    @Override
+    public ReloadableManager<String> getReloadableResourceManager() {
+        return reloadableManager;
+    }
 }

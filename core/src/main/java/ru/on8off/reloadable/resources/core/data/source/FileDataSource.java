@@ -1,4 +1,4 @@
-package ru.on8off.reloadable.resources.core.datasource;
+package ru.on8off.reloadable.resources.core.data.source;
 
 import lombok.Getter;
 import org.apache.commons.io.FileUtils;
@@ -18,11 +18,11 @@ import java.time.ZoneId;
 import java.util.Optional;
 
 @Getter
-public class FileReloadableResourceDataSource implements ReloadableResourceDataSource<InputStream> {
+public class FileDataSource implements ReloadableDataSource<InputStream> {
     private final String location;
     private final File file;
 
-    public FileReloadableResourceDataSource(String location) {
+    public FileDataSource(String location) {
         Validate.notNull(location, "Param 'location' must not be null");
         this.location = location;
         if (location.startsWith("classpath:")) {
@@ -41,18 +41,18 @@ public class FileReloadableResourceDataSource implements ReloadableResourceDataS
     }
 
     @Override
-    public Optional<FileReloadableResourceData<InputStream>> load(LocalDateTime lastModified) throws IOException {
-        FileReloadableResourceData<InputStream> resourceData = null;
+    public Optional<FileReloadableData<InputStream>> load(LocalDateTime lastModified) throws IOException {
+        FileReloadableData<InputStream> resourceData = null;
         if (!file.canRead()) {
             throw new IOException("Can't read from file: " + file.getAbsolutePath());
         }
         BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
         LocalDateTime fileLastModified = localDateTime(fileAttributes.lastModifiedTime().toMillis());
         if (lastModified == null || fileLastModified.isAfter(lastModified)) {
-            resourceData = new FileReloadableResourceData<>();
+            resourceData = new FileReloadableData<>();
             resourceData.setLastModified(fileLastModified);
             resourceData.setLocation(location);
-            resourceData.setResource(new FileInputStream(file));
+            resourceData.setData(new FileInputStream(file));
             resourceData.setFileName(file.getName());
             resourceData.setFileExtension(FilenameUtils.getExtension(file.getName()));
             resourceData.setFilePath(file.getAbsolutePath());

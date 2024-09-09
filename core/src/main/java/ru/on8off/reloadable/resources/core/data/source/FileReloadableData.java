@@ -1,14 +1,14 @@
-package ru.on8off.reloadable.resources.core.datasource;
+package ru.on8off.reloadable.resources.core.data.source;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import ru.on8off.reloadable.resources.core.ReloadableResourceData;
+import ru.on8off.reloadable.resources.core.data.ReloadableData;
 
 import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class FileReloadableResourceData<T> extends ReloadableResourceData<T> {
+public class FileReloadableData<T> extends ReloadableData<T> {
     private LocalDateTime lastModified;
     private String location;
     private String fileName;
