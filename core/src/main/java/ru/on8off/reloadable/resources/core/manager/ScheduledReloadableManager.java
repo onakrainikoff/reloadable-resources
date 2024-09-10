@@ -2,24 +2,20 @@ package ru.on8off.reloadable.resources.core.manager;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import ru.on8off.reloadable.resources.core.ReloadableException;
 import ru.on8off.reloadable.resources.core.data.ReloadableData;
 import ru.on8off.reloadable.resources.core.data.supplier.ReloadableDataSupplier;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ScheduledReloadableManager<T> implements ReloadableManager<T> {
     private final ReloadableDataSupplier<T> reloadableDataSupplier;
-    private final Set<ReloadableListener> reloadableListeners = new ConcurrentSkipListSet<>();
+    private final List<ReloadableListener> reloadableListeners = new CopyOnWriteArrayList<>();
     private volatile ReloadableData<T> reloadableData;
     private final ReentrantLock reloadLock = new ReentrantLock();
     private boolean started = false;
@@ -28,26 +24,26 @@ public class ScheduledReloadableManager<T> implements ReloadableManager<T> {
     private final TimeUnit unit;
 
     public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit) {
-        this(reloadableDataSupplier, period, unit, defaultExecutorService(), Collections.emptySet(), false);
+        this(reloadableDataSupplier, period, unit, defaultExecutorService(), Collections.emptyList(), false);
     }
 
     public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, boolean lazy) {
-        this(reloadableDataSupplier, period, unit, defaultExecutorService(), Collections.emptySet(), lazy);
+        this(reloadableDataSupplier, period, unit, defaultExecutorService(), Collections.emptyList(), lazy);
     }
 
     public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, ReloadableListener listener) {
-        this(reloadableDataSupplier, period, unit, defaultExecutorService(), (listener == null ? Collections.emptySet() : Set.of(listener)), false);
+        this(reloadableDataSupplier, period, unit, defaultExecutorService(), (listener == null ? Collections.emptyList() : List.of(listener)), false);
     }
 
     public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, ReloadableListener listener, boolean lazy) {
-        this(reloadableDataSupplier, period, unit, defaultExecutorService(), (listener == null ? Collections.emptySet() : Set.of(listener)), lazy);
+        this(reloadableDataSupplier, period, unit, defaultExecutorService(), (listener == null ? Collections.emptyList() : List.of(listener)), lazy);
     }
 
-    public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, Set<ReloadableListener> listeners, boolean lazy) {
+    public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, List<ReloadableListener> listeners, boolean lazy) {
         this(reloadableDataSupplier, period, unit, defaultExecutorService(), listeners, lazy);
     }
 
-    public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, ScheduledExecutorService executorService, Set<ReloadableListener> listeners, boolean lazy) {
+    public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, ScheduledExecutorService executorService, List<ReloadableListener> listeners, boolean lazy) {
         this.reloadableDataSupplier = Validate.notNull(reloadableDataSupplier, "Param 'reloadableDataSupplier' must not be null");
         Validate.isTrue(period > 0, "Param 'period' must be > 0");
         this.period = period;
@@ -66,13 +62,16 @@ public class ScheduledReloadableManager<T> implements ReloadableManager<T> {
         if (!started && !executorService.isShutdown()) {
             reload();
             this.executorService.scheduleAtFixedRate(() -> {
-                try {
-                    reload();
-                } catch (Exception ex) {
-                    if (reloadableListeners.isEmpty()) {
-                        ex.printStackTrace();
-                    }
-                }
+                try {reload();} catch (Exception ignored) {}
+            }, period, period, unit);
+            this.started = true;
+        }
+    }
+
+    public synchronized void startAsync() {
+        if (!started && !executorService.isShutdown()) {
+            this.executorService.scheduleAtFixedRate(() -> {
+                try {reload();} catch (Exception ignored) {}
             }, period, period, unit);
             this.started = true;
         }
@@ -98,7 +97,7 @@ public class ScheduledReloadableManager<T> implements ReloadableManager<T> {
             onReloadNotify(oldValue, newValue, totalTime);
         } catch (Exception ex) {
             onExceptionNotify(ex);
-            throw new RuntimeException(ex);
+            throw new ReloadableException(ex);
         } finally {
             reloadLock.unlock();
         }
@@ -116,7 +115,7 @@ public class ScheduledReloadableManager<T> implements ReloadableManager<T> {
     }
 
     @Override
-    public Collection<ReloadableListener> getReloadableListeners() {
+    public List<ReloadableListener> getReloadableListeners() {
         return reloadableListeners;
     }
 
