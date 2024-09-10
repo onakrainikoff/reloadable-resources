@@ -18,7 +18,7 @@ public class ScheduledReloadableManager<T> implements ReloadableManager<T> {
     private final List<ReloadableListener> reloadableListeners = new CopyOnWriteArrayList<>();
     private volatile ReloadableData<T> reloadableData;
     private final ReentrantLock reloadLock = new ReentrantLock();
-    private boolean started = false;
+    private volatile boolean started = false;
     private final ScheduledExecutorService executorService;
     private final long period;
     private final TimeUnit unit;
