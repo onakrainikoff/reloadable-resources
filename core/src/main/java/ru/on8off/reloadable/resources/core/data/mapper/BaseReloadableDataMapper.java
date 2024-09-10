@@ -13,14 +13,10 @@ public abstract class BaseReloadableDataMapper<F, T> implements ReloadableDataMa
             reloadableDataTo.setLastReloaded(LocalDateTime.now());
             reloadableDataTo.setLastModified(reloadableDataFrom.getLastModified());
             reloadableDataTo.setLocation(reloadableDataFrom.getLocation());
-            try {
-                reloadableDataTo.setData(map(reloadableDataFrom.getData()));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            reloadableDataTo.setData(map(reloadableDataFrom.getData()));
         }
         return reloadableDataTo;
     }
 
-    public abstract T map(F dataFrom) throws Exception;
+    public abstract T map(F dataFrom);
 }

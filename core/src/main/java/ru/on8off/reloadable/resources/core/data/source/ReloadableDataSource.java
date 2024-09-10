@@ -2,7 +2,6 @@ package ru.on8off.reloadable.resources.core.data.source;
 
 import ru.on8off.reloadable.resources.core.data.ReloadableData;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 

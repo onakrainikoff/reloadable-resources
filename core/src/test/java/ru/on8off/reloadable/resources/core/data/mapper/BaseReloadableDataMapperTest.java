@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class BaseReloadableDataMapperTest {
     static final String TEST_TEXT = "Test text";
     @Test
-    void apply() {
+     public void testApply() {
         BaseReloadableDataMapper<byte[], String> mapper = new BaseReloadableDataMapper<byte[], String>() {
             @Override
-            public String map(byte[] dataFrom) throws Exception {
+            public String map(byte[] dataFrom) {
                 return new String(dataFrom);
             }
         };

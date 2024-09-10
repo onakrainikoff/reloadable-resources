@@ -19,7 +19,7 @@ public class StringListDataMapper extends BaseReloadableDataMapper<InputStream, 
     }
 
     @Override
-    public List<String> map(InputStream dataFrom) throws Exception {
+    public List<String> map(InputStream dataFrom) {
         return IOUtils.readLines(dataFrom, charset);
     }
 
