@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.Validate;
+import ru.on8off.reloadable.resources.core.ReloadableException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,24 +42,29 @@ public class FileDataSource implements ReloadableDataSource<InputStream> {
     }
 
     @Override
-    public Optional<FileReloadableData<InputStream>> load(LocalDateTime lastModified) throws IOException {
+    public Optional<FileReloadableData<InputStream>> load(LocalDateTime lastModified) {
         FileReloadableData<InputStream> resourceData = null;
         if (!file.canRead()) {
-            throw new IOException("Can't read from file: " + file.getAbsolutePath());
+            throw new ReloadableException("Can't read from file: " + file.getAbsolutePath());
         }
-        BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-        LocalDateTime fileLastModified = localDateTime(fileAttributes.lastModifiedTime().toMillis());
-        if (lastModified == null || fileLastModified.isAfter(lastModified)) {
-            resourceData = new FileReloadableData<>();
-            resourceData.setLastModified(fileLastModified);
-            resourceData.setLocation(location);
-            resourceData.setData(new FileInputStream(file));
-            resourceData.setFileName(file.getName());
-            resourceData.setFileExtension(FilenameUtils.getExtension(file.getName()));
-            resourceData.setFilePath(file.getAbsolutePath());
-            resourceData.setFileCreated(localDateTime(fileAttributes.creationTime().toMillis()));
-            resourceData.setFileSize(FileUtils.byteCountToDisplaySize(fileAttributes.size()));
-            resourceData.setFileSizeBytes(fileAttributes.size());
+        BasicFileAttributes fileAttributes = null;
+        try {
+            fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+            LocalDateTime fileLastModified = localDateTime(fileAttributes.lastModifiedTime().toMillis());
+            if (lastModified == null || fileLastModified.isAfter(lastModified)) {
+                resourceData = new FileReloadableData<>();
+                resourceData.setLastModified(fileLastModified);
+                resourceData.setLocation(location);
+                resourceData.setData(new FileInputStream(file));
+                resourceData.setFileName(file.getName());
+                resourceData.setFileExtension(FilenameUtils.getExtension(file.getName()));
+                resourceData.setFilePath(file.getAbsolutePath());
+                resourceData.setFileCreated(localDateTime(fileAttributes.creationTime().toMillis()));
+                resourceData.setFileSize(FileUtils.byteCountToDisplaySize(fileAttributes.size()));
+                resourceData.setFileSizeBytes(fileAttributes.size());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         return Optional.ofNullable(resourceData);
     }
