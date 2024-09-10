@@ -2,15 +2,27 @@ package ru.on8off.reloadable.resources.core.manager;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
+import ru.on8off.reloadable.resources.core.data.ReloadableData;
 import ru.on8off.reloadable.resources.core.data.supplier.ReloadableDataSupplier;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class ScheduledReloadableManager<T> extends BaseReloadableManager<T> {
+public class ScheduledReloadableManager<T> implements ReloadableManager<T> {
+    private final ReloadableDataSupplier<T> reloadableDataSupplier;
+    private final Set<ReloadableListener> reloadableListeners = new ConcurrentSkipListSet<>();
+    private volatile ReloadableData<T> reloadableData;
+    private final ReentrantLock reloadLock = new ReentrantLock();
+    private boolean started = false;
     private final ScheduledExecutorService executorService;
     private final long period;
     private final TimeUnit unit;
@@ -30,16 +42,20 @@ public class ScheduledReloadableManager<T> extends BaseReloadableManager<T> {
     public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, ReloadableListener listener, boolean lazy) {
         this(reloadableDataSupplier, period, unit, defaultExecutorService(), (listener == null ? Collections.emptySet() : Set.of(listener)), lazy);
     }
+
     public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, Set<ReloadableListener> listeners, boolean lazy) {
         this(reloadableDataSupplier, period, unit, defaultExecutorService(), listeners, lazy);
     }
 
     public ScheduledReloadableManager(ReloadableDataSupplier<T> reloadableDataSupplier, long period, TimeUnit unit, ScheduledExecutorService executorService, Set<ReloadableListener> listeners, boolean lazy) {
-        super(reloadableDataSupplier, listeners);
+        this.reloadableDataSupplier = Validate.notNull(reloadableDataSupplier, "Param 'reloadableDataSupplier' must not be null");
         Validate.isTrue(period > 0, "Param 'period' must be > 0");
         this.period = period;
         this.unit = Validate.notNull(unit, "Param 'unit' must not be null");
         this.executorService = Validate.notNull(executorService, "Param 'executorService' must not be null");
+        if (listeners != null && !listeners.isEmpty()) {
+            this.reloadableListeners.addAll(listeners);
+        }
         if (!lazy) {
             start();
         }
@@ -48,28 +64,91 @@ public class ScheduledReloadableManager<T> extends BaseReloadableManager<T> {
     @Override
     public synchronized void start() {
         if (!started && !executorService.isShutdown()) {
-            super.start();
-            this.executorService.scheduleAtFixedRate(()-> {
+            reload();
+            this.executorService.scheduleAtFixedRate(() -> {
                 try {
                     reload();
                 } catch (Exception ex) {
-                    if(reloadableListeners.isEmpty()) {
+                    if (reloadableListeners.isEmpty()) {
                         ex.printStackTrace();
                     }
                 }
             }, period, period, unit);
+            this.started = true;
         }
     }
 
     @Override
-    public synchronized boolean isStarted() {
+    public boolean isStarted() {
         return started;
     }
+
+    @Override
+    public void reload() {
+        try {
+            reloadLock.lock();
+            long startedTime = System.currentTimeMillis();
+            LocalDateTime lastModified = reloadableData != null ? reloadableData.getLastReloaded() : null;
+            ReloadableData<T> newValue = reloadableDataSupplier.get(lastModified).orElse(null);
+            ReloadableData<T> oldValue = this.reloadableData;
+            if (newValue != null) {
+                this.reloadableData = newValue;
+            }
+            long totalTime = System.currentTimeMillis() - startedTime;
+            onReloadNotify(oldValue, newValue, totalTime);
+        } catch (Exception ex) {
+            onExceptionNotify(ex);
+            throw new RuntimeException(ex);
+        } finally {
+            reloadLock.unlock();
+        }
+    }
+
+
+    @Override
+    public T getData() {
+        return reloadableData == null ? null : reloadableData.getData();
+    }
+
+    @Override
+    public ReloadableData<T> getReloadableData() {
+        return reloadableData;
+    }
+
+    @Override
+    public Collection<ReloadableListener> getReloadableListeners() {
+        return reloadableListeners;
+    }
+
 
     @Override
     public synchronized void stop() {
         if (!executorService.isShutdown()) {
             this.executorService.shutdown();
+        }
+    }
+
+    private void onReloadNotify(ReloadableData<T> oldValue, ReloadableData<T> newValue, long totalTimeMs) {
+        if (!reloadableListeners.isEmpty()) {
+            for (ReloadableListener listener : reloadableListeners) {
+                try {
+                    listener.onReload(oldValue, newValue, totalTimeMs);
+                } catch (Throwable t) {
+                    Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, t, ()-> "ScheduledReloadableManager onReloadNotify error:");
+                }
+            }
+        }
+    }
+
+    private void onExceptionNotify(Exception ex) {
+        if (!reloadableListeners.isEmpty()) {
+            for (ReloadableListener listener : reloadableListeners) {
+                try {
+                    listener.onException(ex);
+                } catch (Throwable t) {
+                    Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, t, ()-> "ScheduledReloadableManager onExceptionNotify error:");
+                }
+            }
         }
     }
 
